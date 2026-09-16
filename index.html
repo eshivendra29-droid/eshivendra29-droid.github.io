@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Data Review | Cafe Training</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f3ef;
+      color: #29251f;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1050px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    header {
+      background: #29251f;
+      color: white;
+      padding: 55px 24px;
+    }
+
+    header h1 {
+      font-size: 38px;
+      margin: 12px 0;
+    }
+
+    header p {
+      color: #d8d0c4;
+      max-width: 600px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #d8a45d;
+      color: #29251f;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    h2 {
+      margin-top: 36px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e4ded4;
+    }
+
+    .card h3 {
+      font-size: 14px;
+      color: #766d61;
+      margin: 0;
+    }
+
+    .number {
+      font-size: 30px;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+
+    .status {
+      color: #47724e;
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 28px;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #e4ded4;
+    }
+
+    .section h2 {
+      margin-top: 0;
+    }
+
+    .task {
+      display: flex;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #eee8df;
+      align-items: center;
+    }
+
+    .task:last-child {
+      border-bottom: 0;
+    }
+
+    .task input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .task label {
+      flex: 1;
+    }
+
+    .task small {
+      color: #766d61;
+    }
+
+    .resource {
+      display: inline-block;
+      background: #f0ebe3;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin: 4px;
+      color: #29251f;
+      text-decoration: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #766d61;
+      font-size: 13px;
+    }
+
+    @media (max-width: 700px) {
+      header h1 {
+        font-size: 30px;
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .task {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <span class="tag">CAFE TRAINING & PERFORMANCE</span>
+      <h1>Weekly Data Review</h1>
+      <p>
+        A simple space to review cafe performance,
+        celebrate team progress and close weekly actions.
+      </p>
+      <p><strong>Review period:</strong> 14–20 September 2026</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <h2>Weekly Performance</h2>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Training Completion</h3>
+        <div class="number">85%</div>
+        <div class="status">↑ Sample target: 90%</div>
+      </div>
+
+      <div class="card">
+        <h3>Audit Score</h3>
+        <div class="number">92%</div>
+        <div class="status">↑ Sample target: 90%</div>
+      </div>
+
+      <div class="card">
+        <h3>Store Reviews</h3>
+        <div class="number">4</div>
+        <div class="status">Sample weekly count</div>
+      </div>
+
+      <div class="card">
+        <h3>Open Actions</h3>
+        <div class="number">6</div>
+        <div class="status">Sample pending count</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Training Focus</h2>
+      <p>Key areas for this week's cafe team development.</p>
+      <ul>
+        <li>Basic product and process knowledge</li>
+        <li>Buddy Trainer skill checks</li>
+        <li>Training audit opportunities</li>
+        <li>Learning management system completion</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Weekly Action Tracker</h2>
+      <p>Tick off actions as you complete them. These checkboxes work in the browser.</p>
+
+      <div class="task">
+        <input type="checkbox" id="task1">
+        <label for="task1">
+          Close pending training modules
+          <br><small>Owner: Store Manager</small>
+        </label>
+      </div>
+
+      <div class="task">
+        <input type="checkbox" id="task2">
+        <label for="task2">
+          Complete Buddy Trainer skill checks
+          <br><small>Owner: Training Team</small>
+        </label>
+      </div>
+
+      <div class="task">
+        <input type="checkbox" id="task3">
+        <label for="task3">
+          Review weekly store audit scores
+          <br><small>Owner: Area Manager</small>
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Training Resources</h2>
+      <a class="resource" href="#">Training Calendar</a>
+      <a class="resource" href="#">Audit Checklist</a>
+      <a class="resource" href="#">Buddy Trainer Guide</a>
+      <a class="resource" href="#">Weekly Report</a>
+    </div>
+
+    <footer>
+      Weekly Data Review • Cafe Training & Development
+    </footer>
+  </main>
+
+</body>
+</html>
