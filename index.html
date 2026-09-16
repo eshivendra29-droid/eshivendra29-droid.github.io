@@ -1,259 +1,537 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Data Review | Cafe Training</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Training Dashboard | Cafe Training</title>
+<style>
+  :root{
+    --bg:#f5f3ef; --surface:#ffffff; --ink:#29251f; --ink-soft:#6b6459;
+    --muted:#898781; --border:#e4ded4; --accent:#d8a45d; --accent-dark:#29251f;
+    --good:#0ca30c; --warning:#b9790a; --serious:#c1592f; --critical:#c8302f;
+    --good-bg:#e3f6e0; --warning-bg:#fdf0d8; --serious-bg:#fbe4d8; --critical-bg:#fadbdb; --muted-bg:#eee9e0;
+    --am-1:#2a78d6; --am-2:#eb6834; --am-3:#1baf7a; --am-4:#c98500;
+    --am-5:#e87ba4; --am-6:#008300; --am-7:#4a3aa7; --am-8:#e34948;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
+  .container{max-width:1180px;margin:auto;padding:24px;}
+  header{background:var(--accent-dark);color:#fff;padding:44px 24px 30px;}
+  header .container{padding:0 24px;}
+  .tag{display:inline-block;background:var(--accent);color:var(--accent-dark);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.03em;}
+  header h1{font-size:32px;margin:12px 0 6px;}
+  header p{color:#d8d0c4;max-width:640px;margin:4px 0;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:13px;color:#cfc6b6;align-items:center;}
+  #refreshBtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
+  #refreshBtn:hover{background:rgba(255,255,255,.22);}
+  #refreshBtn:disabled{opacity:.6;cursor:default;}
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f3ef;
-      color: #29251f;
-      line-height: 1.6;
-    }
+  .filterbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .filterbar label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-right:4px;}
+  .filterbar select, .filterbar input[type=search]{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);}
+  .filterbar .grp{display:flex;align-items:center;gap:6px;}
+  .filterbar .spacer{flex:1;}
+  #filterStatus{font-size:12px;color:var(--muted);}
+  #clearFilters{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--ink-soft);}
 
-    .container {
-      max-width: 1050px;
-      margin: auto;
-      padding: 24px;
-    }
+  main{padding-top:8px;}
+  h2{margin:0 0 4px;font-size:21px;}
+  .section-sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px;}
+  .section{margin-top:26px;background:var(--surface);padding:22px 24px 26px;border-radius:14px;border:1px solid var(--border);}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .note{background:var(--muted-bg);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--ink-soft);margin:10px 0 18px;}
 
-    header {
-      background: #29251f;
-      color: white;
-      padding: 55px 24px;
-    }
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .card{background:var(--bg);padding:16px 16px;border-radius:12px;border:1px solid var(--border);}
+  .card h3{font-size:12.5px;color:var(--ink-soft);margin:0;font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
+  .card .number{font-size:27px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums;}
+  .card .sub{color:var(--muted);font-size:12px;}
 
-    header h1 {
-      font-size: 38px;
-      margin: 12px 0;
-    }
+  table{width:100%;border-collapse:collapse;font-size:13.2px;}
+  th{text-align:left;background:var(--bg);color:var(--ink-soft);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;padding:9px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;}
+  td{padding:8px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;vertical-align:middle;}
+  tbody tr:hover{background:#faf8f4;}
+  .tablewrap{overflow:auto;max-height:460px;border:1px solid var(--border);border-radius:10px;}
+  .tablewrap table{font-size:12.8px;}
+  .tablewrap th{top:0;}
 
-    header p {
-      color: #d8d0c4;
-      max-width: 600px;
-    }
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+  .pill.good{background:var(--good-bg);color:var(--good);}
+  .pill.warning{background:var(--warning-bg);color:var(--warning);}
+  .pill.serious{background:var(--serious-bg);color:var(--serious);}
+  .pill.critical{background:var(--critical-bg);color:var(--critical);}
+  .pill.muted{background:var(--muted-bg);color:var(--ink-soft);}
 
-    .tag {
-      display: inline-block;
-      background: #d8a45d;
-      color: #29251f;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-    }
+  .barcell{display:flex;align-items:center;gap:8px;min-width:120px;}
+  .barcell .track{flex:1;height:7px;background:var(--muted-bg);border-radius:4px;overflow:hidden;}
+  .barcell .fill{height:100%;border-radius:4px;background:var(--am-1);}
+  .barcell .pct{font-size:12px;font-weight:700;width:38px;text-align:right;}
 
-    h2 {
-      margin-top: 36px;
-    }
+  .stack{display:flex;height:10px;border-radius:5px;overflow:hidden;width:160px;border:1px solid var(--border);}
+  .stack span{height:100%;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin:10px 0 14px;}
+  .legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
+  .toggleBtn{background:var(--accent-dark);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12.5px;cursor:pointer;}
+  .toggleBtn:hover{opacity:.9;}
+  .searchWrap{margin:14px 0 10px;}
+  .searchWrap input{width:100%;max-width:320px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
 
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #e4ded4;
-    }
+  .followlist{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+  .followlist li{display:flex;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 13px;font-size:13px;}
+  .followlist .who{font-weight:600;}
+  .followlist .why{color:var(--ink-soft);font-size:12px;}
 
-    .card h3 {
-      font-size: 14px;
-      color: #766d61;
-      margin: 0;
-    }
+  #loadingState{padding:60px 24px;text-align:center;color:var(--ink-soft);}
+  #errorState{display:none;margin:20px 24px;padding:16px 18px;background:var(--critical-bg);color:var(--critical);border-radius:10px;font-size:13.5px;}
+  .hidden{display:none !important;}
 
-    .number {
-      font-size: 30px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
+  footer{text-align:center;padding:34px 0 40px;color:var(--muted);font-size:12.5px;}
+  th.sortable{cursor:pointer;user-select:none;}
+  th.sortable:after{content:"↕";opacity:.4;margin-left:4px;font-size:10px;}
 
-    .status {
-      color: #47724e;
-      font-size: 13px;
-    }
-
-    .section {
-      margin-top: 28px;
-      background: white;
-      padding: 24px;
-      border-radius: 12px;
-      border: 1px solid #e4ded4;
-    }
-
-    .section h2 {
-      margin-top: 0;
-    }
-
-    .task {
-      display: flex;
-      gap: 12px;
-      padding: 14px 0;
-      border-bottom: 1px solid #eee8df;
-      align-items: center;
-    }
-
-    .task:last-child {
-      border-bottom: 0;
-    }
-
-    .task input {
-      width: 18px;
-      height: 18px;
-    }
-
-    .task label {
-      flex: 1;
-    }
-
-    .task small {
-      color: #766d61;
-    }
-
-    .resource {
-      display: inline-block;
-      background: #f0ebe3;
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin: 4px;
-      color: #29251f;
-      text-decoration: none;
-    }
-
-    footer {
-      text-align: center;
-      padding: 30px 0;
-      color: #766d61;
-      font-size: 13px;
-    }
-
-    @media (max-width: 700px) {
-      header h1 {
-        font-size: 30px;
-      }
-
-      .cards {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .task {
-        align-items: flex-start;
-      }
-    }
-
-    @media (max-width: 420px) {
-      .cards {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  @media (max-width:760px){
+    header h1{font-size:26px;}
+    .cards{grid-template-columns:repeat(2,1fr);}
+    .filterbar{position:static;}
+  }
+  @media (max-width:440px){
+    .cards{grid-template-columns:1fr;}
+  }
+</style>
 </head>
 <body>
 
-  <header>
-    <div class="container">
-      <span class="tag">CAFE TRAINING & PERFORMANCE</span>
-      <h1>Weekly Data Review</h1>
-      <p>
-        A simple space to review cafe performance,
-        celebrate team progress and close weekly actions.
-      </p>
-      <p><strong>Review period:</strong> 14–20 September 2026</p>
+<header>
+  <div class="container">
+    <span class="tag">CAFE TRAINING &amp; PERFORMANCE</span>
+    <h1>Weekly Training Dashboard</h1>
+    <p>Live view of station certifications, store training-audit health, and manager SHLP readiness &mdash; pulled straight from the tracking sheet for the weekly review call.</p>
+    <div class="meta-row">
+      <span id="reviewPeriod">Review period: &mdash;</span>
+      <span id="lastRefreshed">Data as of: loading&hellip;</span>
+      <button id="refreshBtn">Refresh data</button>
     </div>
-  </header>
+  </div>
+</header>
+
+<div id="loadingState">Loading the latest data from your Google Sheet&hellip;</div>
+<div id="errorState" class="container"></div>
+
+<div id="app" class="hidden">
+  <div class="filterbar">
+    <div class="grp">
+      <label for="cityFilter">City</label>
+      <select id="cityFilter"><option value="">All cities</option></select>
+    </div>
+    <div class="grp">
+      <label for="amFilter">Area Manager</label>
+      <select id="amFilter"><option value="">All AMs</option></select>
+    </div>
+    <button id="clearFilters">Clear filters</button>
+    <div class="spacer"></div>
+    <span id="filterStatus"></span>
+  </div>
 
   <main class="container">
-    <h2>Weekly Performance</h2>
 
-    <div class="cards">
-      <div class="card">
-        <h3>Training Completion</h3>
-        <div class="number">85%</div>
-        <div class="status">↑ Sample target: 90%</div>
+    <div class="section" id="followupSection">
+      <div class="section-head"><h2>This week&rsquo;s follow-ups</h2></div>
+      <p class="section-sub">Auto-generated from the sheet &mdash; stores and managers that need attention before the next review.</p>
+      <ul class="followlist" id="followList"></ul>
+    </div>
+
+    <div class="section" id="certSection">
+      <div class="section-head"><h2>Station Certifications</h2></div>
+      <p class="section-sub">Food, Beverage &amp; CX station certification across the active team.</p>
+      <div class="cards" id="certCards"></div>
+      <h3 style="margin:18px 0 8px;font-size:15px;">Storewise &mdash; % of team fully certified (all 3 stations)</h3>
+      <div class="tablewrap"><table id="certStoreTable"><thead></thead><tbody></tbody></table></div>
+      <div class="searchWrap">
+        <button class="toggleBtn" id="toggleEmpTable">Show employee-level detail</button>
       </div>
-
-      <div class="card">
-        <h3>Audit Score</h3>
-        <div class="number">92%</div>
-        <div class="status">↑ Sample target: 90%</div>
-      </div>
-
-      <div class="card">
-        <h3>Store Reviews</h3>
-        <div class="number">4</div>
-        <div class="status">Sample weekly count</div>
-      </div>
-
-      <div class="card">
-        <h3>Open Actions</h3>
-        <div class="number">6</div>
-        <div class="status">Sample pending count</div>
+      <div id="empDetailWrap" class="hidden">
+        <div class="searchWrap"><input type="search" id="empSearch" placeholder="Search by name, store or employee code&hellip;"></div>
+        <div class="tablewrap"><table id="empTable"><thead></thead><tbody></tbody></table></div>
       </div>
     </div>
 
-    <div class="section">
-      <h2>Training Focus</h2>
-      <p>Key areas for this week's cafe team development.</p>
-      <ul>
-        <li>Basic product and process knowledge</li>
-        <li>Buddy Trainer skill checks</li>
-        <li>Training audit opportunities</li>
-        <li>Learning management system completion</li>
-      </ul>
+    <div class="section" id="auditSection">
+      <div class="section-head"><h2>Store Training Audit Health</h2></div>
+      <p class="section-sub">Weekly audit score and health category, storewise and by Area Manager.</p>
+      <div id="auditCoverageNote" class="note"></div>
+      <div class="cards" id="auditCards"></div>
+      <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
+      <div class="tablewrap"><table id="auditAmTable"><thead></thead><tbody></tbody></table></div>
+      <h3 style="margin:22px 0 8px;font-size:15px;">Storewise</h3>
+      <div class="tablewrap"><table id="auditStoreTable"><thead></thead><tbody></tbody></table></div>
     </div>
 
-    <div class="section">
-      <h2>Weekly Action Tracker</h2>
-      <p>Tick off actions as you complete them. These checkboxes work in the browser.</p>
-
-      <div class="task">
-        <input type="checkbox" id="task1">
-        <label for="task1">
-          Close pending training modules
-          <br><small>Owner: Store Manager</small>
-        </label>
-      </div>
-
-      <div class="task">
-        <input type="checkbox" id="task2">
-        <label for="task2">
-          Complete Buddy Trainer skill checks
-          <br><small>Owner: Training Team</small>
-        </label>
-      </div>
-
-      <div class="task">
-        <input type="checkbox" id="task3">
-        <label for="task3">
-          Review weekly store audit scores
-          <br><small>Owner: Area Manager</small>
-        </label>
-      </div>
+    <div class="section" id="shlpSection">
+      <div class="section-head"><h2>SHLP &mdash; Manager Readiness</h2></div>
+      <p class="section-sub">Shift Managers, Assistant Store Managers &amp; Store Managers only.</p>
+      <div class="cards" id="shlpCards"></div>
+      <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
+      <div class="legend" id="shlpLegend"></div>
+      <div class="tablewrap"><table id="shlpAmTable"><thead></thead><tbody></tbody></table></div>
+      <h3 style="margin:22px 0 8px;font-size:15px;">Storewise &mdash; individual managers</h3>
+      <div class="tablewrap"><table id="shlpStoreTable"><thead></thead><tbody></tbody></table></div>
     </div>
 
-    <div class="section">
-      <h2>Training Resources</h2>
-      <a class="resource" href="#">Training Calendar</a>
-      <a class="resource" href="#">Audit Checklist</a>
-      <a class="resource" href="#">Buddy Trainer Guide</a>
-      <a class="resource" href="#">Weekly Report</a>
-    </div>
-
-    <footer>
-      Weekly Data Review • Cafe Training & Development
-    </footer>
   </main>
+</div>
+
+<footer>
+  Weekly Training Dashboard &bull; Data source: Google Sheet (SOC/SHLP Data &amp; Store Health tabs) &bull; Built for the weekly review call
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const SHEET_ID = "1NRBmD1P0eGGVieUj4_WVxit5hLXOB8O77IfJn9-ydz8";
+  const GID_EMP = "486914838";
+  const GID_HEALTH = "1403129736";
+  const SHLP_DESIGNATIONS = ["Store Manager","Assistant Store Manager","Shift Manager"];
+  const AM_COLORS = ["var(--am-1)","var(--am-2)","var(--am-3)","var(--am-4)","var(--am-5)","var(--am-6)","var(--am-7)","var(--am-8)"];
+
+  let state = { employees: [], audit: [], amOrder: [], cityOrder: [], filters: { city: "", am: "" } };
+
+  function gvizUrl(gid){
+    return "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:json&gid=" + gid;
+  }
+
+  async function fetchSheet(gid){
+    const res = await fetch(gvizUrl(gid), { cache: "no-store" });
+    if(!res.ok) throw new Error("Could not load the sheet (HTTP " + res.status + "). Check that link sharing is set to “Anyone with the link – Viewer”.");
+    const text = await res.text();
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    const json = JSON.parse(text.substring(start, end + 1));
+    const cols = json.table.cols.map(function(c){ return c.label || c.id; });
+    const rows = json.table.rows.map(function(r){
+      return (r.c || []).map(function(c){ return c ? (c.f !== undefined && c.f !== null ? c.f : c.v) : null; });
+    });
+    return { cols: cols, rows: rows };
+  }
+
+  function idx(cols, label){ return cols.indexOf(label); }
+
+  function loadEmployees(sheet){
+    const c = sheet.cols;
+    const iCode = idx(c,"Employee_Code"), iName = idx(c,"EmpName"), iStatus = idx(c,"Status"),
+          iDesig = idx(c,"Designation"), iLoc = idx(c,"Location"), iCity = idx(c,"City"),
+          iAM = idx(c,"AM"), iFood = idx(c,"Food Station"), iBev = idx(c,"Beverage Station"),
+          iCX = idx(c,"CX Station"), iAll3 = idx(c,"All 3 Station Certification Status"),
+          iOrient = idx(c,"Orientation"), iShlp = idx(c,"SHLP Status"), iFostac = idx(c,"FOSTAC");
+    return sheet.rows.filter(function(r){ return r[iLoc]; }).map(function(r){
+      return {
+        code: r[iCode], name: r[iName], status: r[iStatus], designation: r[iDesig],
+        location: r[iLoc], city: r[iCity], am: r[iAM],
+        food: r[iFood], beverage: r[iBev], cx: r[iCX],
+        all3: r[iAll3] === "All 3 Station Certified",
+        orientation: r[iOrient], shlp: r[iShlp], fostac: r[iFostac]
+      };
+    });
+  }
+
+  function loadAudit(sheet){
+    // Positional read – header row for this tab is a merged banner, so labels aren't reliable.
+    return sheet.rows.filter(function(r){ return typeof r[0] === "string" && /^\d+$/.test(r[0]) && r[1]; }).map(function(r){
+      return {
+        location: r[1], am: r[2], totalEmployees: Number(r[3]) || 0,
+        foodCert: Number(r[4]) || 0, bevCert: Number(r[5]) || 0, cxCert: Number(r[6]) || 0,
+        all3Count: Number(r[7]) || 0, all3Pct: r[8], trainingAuditPct: r[9],
+        healthCategory: r[10] || "N/A", actionPlan: r[11] || "—",
+        orientationLMS: r[12], dueOn: r[13]
+      };
+    });
+  }
+
+  function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
+
+  function pillForShlp(status){
+    if(status === "Pass") return '<span class="pill good">Pass</span>';
+    if(status === "Fail") return '<span class="pill critical">Fail</span>';
+    if(status === "Pending") return '<span class="pill warning">Pending</span>';
+    return '<span class="pill muted">' + (status || "—") + '</span>';
+  }
+  function pillForCert(status){
+    if(status === "Certified") return '<span class="pill good">Certified</span>';
+    if(status === "Pending") return '<span class="pill warning">Pending</span>';
+    return '<span class="pill muted">' + (status || "—") + '</span>';
+  }
+  function pillForHealth(cat){
+    const map = { "Perfect Shot":"good", "Brewing":"warning", "NSO":"serious" };
+    const cls = map[cat] || "muted";
+    return '<span class="pill ' + cls + '">' + (cat || "N/A") + '</span>';
+  }
+  function pillForAction(a){
+    if(a === "Done") return '<span class="pill good">Done</span>';
+    if(a === "Pending") return '<span class="pill critical">Pending</span>';
+    return '<span class="pill muted">' + (a || "—") + '</span>';
+  }
+
+  function pct(n){ return Math.round(n*100) + "%"; }
+
+  function barCell(pctValue, label){
+    const p = Math.max(0, Math.min(100, Math.round(pctValue*100)));
+    return '<div class="barcell"><div class="track"><div class="fill" style="width:'+p+'%"></div></div><div class="pct">'+(label!==undefined?label:p+"%")+'</div></div>';
+  }
+
+  function applyFilters(list){
+    return list.filter(function(x){
+      if(state.filters.city && x.city !== state.filters.city) return false;
+      if(state.filters.am && x.am !== state.filters.am) return false;
+      return true;
+    });
+  }
+
+  function groupBy(arr, key){
+    const m = {};
+    arr.forEach(function(x){ const k = x[key] || "—"; (m[k] = m[k] || []).push(x); });
+    return m;
+  }
+
+  // ---------- Render: Station Certifications ----------
+  function renderCert(){
+    const emps = applyFilters(state.employees);
+    const total = emps.length;
+    const certified = emps.filter(function(e){ return e.all3; }).length;
+    const byStore = groupBy(emps, "location");
+    const storeKeys = Object.keys(byStore);
+    const at100 = storeKeys.filter(function(k){ const g=byStore[k]; return g.length && g.every(function(e){return e.all3;}); }).length;
+
+    document.getElementById("certCards").innerHTML =
+      card("Active team members", total.toLocaleString(), "in current filter") +
+      card("Fully certified (all 3)", total ? pct(certified/total) : "—", certified + " of " + total) +
+      card("Stores at 100%", at100, "of " + storeKeys.length + " stores") +
+      card("Stores below 100%", storeKeys.length - at100, "need follow-up");
+
+    const rows = storeKeys.map(function(loc){
+      const g = byStore[loc];
+      const c = g.filter(function(e){return e.all3;}).length;
+      return { location: loc, city: g[0].city, am: g[0].am, total: g.length, certified: c, p: g.length ? c/g.length : 0 };
+    }).sort(function(a,b){ return a.p - b.p; });
+
+    renderTable("certStoreTable", ["Store","City","AM","Team size","All-3 certified"], rows.map(function(r){
+      return [r.location, r.city, r.am, r.total, barCell(r.p, r.certified + "/" + r.total)];
+    }));
+
+    renderEmpTable(emps);
+  }
+
+  function renderEmpTable(emps){
+    const q = (document.getElementById("empSearch").value || "").toLowerCase();
+    const filtered = q ? emps.filter(function(e){
+      return (e.name||"").toLowerCase().indexOf(q) > -1 || (e.location||"").toLowerCase().indexOf(q) > -1 || (e.code||"").toLowerCase().indexOf(q) > -1;
+    }) : emps;
+    renderTable("empTable", ["Employee","Code","Store","Designation","Food","Beverage","CX","Orientation"], filtered.slice(0,1000).map(function(e){
+      return [e.name, e.code, e.location, e.designation, pillForCert(e.food), pillForCert(e.beverage), pillForCert(e.cx), e.orientation || "—"];
+    }));
+  }
+
+  // ---------- Render: Audit Health ----------
+  function renderAudit(){
+    const emps = applyFilters(state.employees);
+    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
+    const allowedAMs = new Set(emps.map(function(e){return e.am;}));
+    let audit = state.audit.filter(function(a){
+      if(state.filters.am && a.am !== state.filters.am) return false;
+      if(state.filters.city && !(allowedLocations.has(a.location))) return false;
+      return true;
+    });
+
+    const coveredCities = uniqueSorted(state.employees.filter(function(e){ return audit.some(function(a){return a.location===e.location;}); }).map(function(e){return e.city;}));
+    const allCities = uniqueSorted(state.employees.map(function(e){return e.city;}));
+    const missing = allCities.filter(function(c){ return coveredCities.indexOf(c) === -1; });
+    document.getElementById("auditCoverageNote").textContent = missing.length
+      ? "Audit data currently on file for: " + coveredCities.join(", ") + ". Not yet captured for: " + missing.join(", ") + " — add rows to the Store Health tab in the same format and they'll show up here automatically."
+      : "Audit data is on file for all cities in the sheet.";
+
+    const avgAudit = audit.length ? audit.reduce(function(s,a){return s+parsePct(a.trainingAuditPct);},0) / audit.length : 0;
+    const pendingActions = audit.filter(function(a){ return a.actionPlan === "Pending"; }).length;
+    document.getElementById("auditCards").innerHTML =
+      card("Stores audited", audit.length, "in current filter") +
+      card("Average audit score", audit.length ? pct(avgAudit) : "—", "training audit %") +
+      card("Action items pending", pendingActions, "need closure") +
+      card("Perfect Shot stores", audit.filter(function(a){return a.healthCategory==="Perfect Shot";}).length, "top health tier");
+
+    const byAM = groupBy(audit, "am");
+    const amRows = Object.keys(byAM).sort().map(function(am){
+      const g = byAM[am];
+      const avg = g.reduce(function(s,a){return s+parsePct(a.trainingAuditPct);},0) / g.length;
+      const cats = { "Perfect Shot":0, "Brewing":0, "NSO":0 };
+      g.forEach(function(a){ cats[a.healthCategory] = (cats[a.healthCategory]||0) + 1; });
+      return [am, g.length, barCell(avg), cats["Perfect Shot"]+" / "+cats["Brewing"]+" / "+cats["NSO"]];
+    });
+    renderTable("auditAmTable", ["Area Manager","Stores","Avg audit score","Perfect Shot / Brewing / NSO"], amRows);
+
+    const storeRows = audit.slice().sort(function(a,b){ return parsePct(a.trainingAuditPct) - parsePct(b.trainingAuditPct); }).map(function(a){
+      return [a.location, a.am, barCell(parsePct(a.trainingAuditPct)), pillForHealth(a.healthCategory), pillForAction(a.actionPlan), a.orientationLMS || "—"];
+    });
+    renderTable("auditStoreTable", ["Store","AM","Audit score","Health category","Action plan","Orientation LMS"], storeRows);
+  }
+  function parsePct(v){
+    if(typeof v === "number") return v;
+    if(typeof v === "string" && v.indexOf("%") > -1) return parseFloat(v)/100;
+    return 0;
+  }
+
+  // ---------- Render: SHLP ----------
+  function renderShlp(){
+    const emps = applyFilters(state.employees).filter(function(e){ return SHLP_DESIGNATIONS.indexOf(e.designation) > -1; });
+    const pass = emps.filter(function(e){return e.shlp==="Pass";}).length;
+    const fail = emps.filter(function(e){return e.shlp==="Fail";}).length;
+    const pending = emps.filter(function(e){return e.shlp==="Pending";}).length;
+
+    document.getElementById("shlpCards").innerHTML =
+      card("Managers tracked", emps.length, "Shift / ASM / SM") +
+      card("Pass", emps.length ? pct(pass/emps.length) : "—", pass + " managers") +
+      card("Fail", fail, "need re-assessment") +
+      card("Pending", pending, "not yet assessed");
+
+    document.getElementById("shlpLegend").innerHTML =
+      '<span><span class="dot" style="background:var(--good)"></span>Pass</span>' +
+      '<span><span class="dot" style="background:var(--critical)"></span>Fail</span>' +
+      '<span><span class="dot" style="background:var(--warning)"></span>Pending</span>';
+
+    const byAM = groupBy(emps, "am");
+    const amRows = Object.keys(byAM).sort().map(function(am){
+      const g = byAM[am];
+      const p = g.filter(function(e){return e.shlp==="Pass";}).length;
+      const f = g.filter(function(e){return e.shlp==="Fail";}).length;
+      const pe = g.filter(function(e){return e.shlp==="Pending";}).length;
+      const tot = g.length || 1;
+      const stack = '<div class="stack">'+
+        '<span style="width:'+(p/tot*100)+'%;background:var(--good)"></span>'+
+        '<span style="width:'+(f/tot*100)+'%;background:var(--critical)"></span>'+
+        '<span style="width:'+(pe/tot*100)+'%;background:var(--warning)"></span>'+
+        '</div>';
+      return [am, g.length, stack, pct(p/tot)];
+    });
+    renderTable("shlpAmTable", ["Area Manager","Managers","Pass / Fail / Pending","Pass rate"], amRows);
+
+    const storeRows = emps.slice().sort(function(a,b){ return (a.location||"").localeCompare(b.location||""); }).map(function(e){
+      return [e.location, e.am, e.name, e.designation, pillForShlp(e.shlp), pillForCert(e.fostac)];
+    });
+    renderTable("shlpStoreTable", ["Store","AM","Manager","Designation","SHLP status","FOSTAC"], storeRows);
+  }
+
+  // ---------- Follow-ups ----------
+  function renderFollowups(){
+    const items = [];
+    const emps = applyFilters(state.employees);
+    const byStore = groupBy(emps, "location");
+    Object.keys(byStore).forEach(function(loc){
+      const g = byStore[loc];
+      const c = g.filter(function(e){return e.all3;}).length;
+      if(g.length && c < g.length){
+        items.push({ who: loc, why: (g.length-c) + " team member(s) missing full station certification", weight: g.length-c });
+      }
+    });
+    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
+    state.audit.filter(function(a){ return !state.filters.city || allowedLocations.has(a.location); })
+      .filter(function(a){ return !state.filters.am || a.am === state.filters.am; })
+      .forEach(function(a){
+        if(a.actionPlan === "Pending") items.push({ who: a.location, why: "Audit action plan pending (" + a.healthCategory + ")", weight: 2 });
+      });
+    emps.filter(function(e){ return SHLP_DESIGNATIONS.indexOf(e.designation) > -1 && e.shlp === "Fail"; }).forEach(function(e){
+      items.push({ who: e.name + " — " + e.location, why: e.designation + " failed SHLP", weight: 3 });
+    });
+    items.sort(function(a,b){ return b.weight - a.weight; });
+    const top = items.slice(0, 12);
+    document.getElementById("followList").innerHTML = top.length ? top.map(function(i){
+      return '<li><span class="who">'+escapeHtml(i.who)+'</span><span class="why">'+escapeHtml(i.why)+'</span></li>';
+    }).join("") : '<li><span class="who">All clear</span><span class="why">No open follow-ups for this filter</span></li>';
+  }
+
+  function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  function card(title, number, sub){
+    return '<div class="card"><h3>'+escapeHtml(title)+'</h3><div class="number">'+escapeHtml(number)+'</div><div class="sub">'+escapeHtml(sub)+'</div></div>';
+  }
+
+  function renderTable(tableId, headers, rows){
+    const table = document.getElementById(tableId);
+    table.querySelector("thead").innerHTML = "<tr>" + headers.map(function(h){ return "<th>"+escapeHtml(h)+"</th>"; }).join("") + "</tr>";
+    table.querySelector("tbody").innerHTML = rows.length ? rows.map(function(r){
+      return "<tr>" + r.map(function(c){ return "<td>"+(typeof c === "string" && c.indexOf("<") > -1 ? c : escapeHtml(c)) + "</td>"; }).join("") + "</tr>";
+    }).join("") : '<tr><td colspan="'+headers.length+'" style="color:var(--muted);text-align:center;padding:20px;">No rows match the current filter</td></tr>';
+  }
+
+  function renderAll(){
+    renderFollowups();
+    renderCert();
+    renderAudit();
+    renderShlp();
+  }
+
+  function populateFilters(){
+    const citySel = document.getElementById("cityFilter");
+    const amSel = document.getElementById("amFilter");
+    state.cityOrder.forEach(function(c){ const o=document.createElement("option"); o.value=c; o.textContent=c; citySel.appendChild(o); });
+    state.amOrder.forEach(function(a){ const o=document.createElement("option"); o.value=a; o.textContent=a; amSel.appendChild(o); });
+    citySel.value = state.filters.city;
+    amSel.value = state.filters.am;
+    citySel.addEventListener("change", function(){ state.filters.city = citySel.value; updateFilterStatus(); renderAll(); });
+    amSel.addEventListener("change", function(){ state.filters.am = amSel.value; updateFilterStatus(); renderAll(); });
+    document.getElementById("clearFilters").addEventListener("click", function(){
+      state.filters = { city:"", am:"" }; citySel.value=""; amSel.value=""; updateFilterStatus(); renderAll();
+    });
+  }
+  function updateFilterStatus(){
+    const parts = [];
+    if(state.filters.city) parts.push(state.filters.city);
+    if(state.filters.am) parts.push("AM: " + state.filters.am);
+    document.getElementById("filterStatus").textContent = parts.length ? "Filtered: " + parts.join(" · ") : "Showing all stores";
+  }
+
+  async function loadAll(){
+    document.getElementById("loadingState").classList.remove("hidden");
+    document.getElementById("errorState").style.display = "none";
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("refreshBtn").disabled = true;
+    try{
+      const [empSheet, healthSheet] = await Promise.all([fetchSheet(GID_EMP), fetchSheet(GID_HEALTH)]);
+      state.employees = loadEmployees(empSheet);
+      state.audit = loadAudit(healthSheet);
+      state.amOrder = uniqueSorted(state.employees.map(function(e){return e.am;}));
+      state.cityOrder = uniqueSorted(state.employees.map(function(e){return e.city;}));
+
+      const now = new Date();
+      document.getElementById("reviewPeriod").textContent = "Review period: week of " + now.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+      document.getElementById("lastRefreshed").textContent = "Data as of: " + now.toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+
+      if(document.getElementById("cityFilter").options.length <= 1){ populateFilters(); }
+      updateFilterStatus();
+      renderAll();
+
+      document.getElementById("loadingState").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+    }catch(err){
+      document.getElementById("loadingState").classList.add("hidden");
+      const box = document.getElementById("errorState");
+      box.style.display = "block";
+      box.textContent = "Couldn't load live data: " + err.message;
+    }finally{
+      document.getElementById("refreshBtn").disabled = false;
+    }
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadAll);
+  document.getElementById("toggleEmpTable").addEventListener("click", function(){
+    const wrap = document.getElementById("empDetailWrap");
+    const btn = document.getElementById("toggleEmpTable");
+    const show = wrap.classList.contains("hidden");
+    wrap.classList.toggle("hidden");
+    btn.textContent = show ? "Hide employee-level detail" : "Show employee-level detail";
+  });
+  document.getElementById("empSearch").addEventListener("input", function(){ renderEmpTable(applyFilters(state.employees)); });
+
+  loadAll();
+})();
+</script>
 
 </body>
 </html>
