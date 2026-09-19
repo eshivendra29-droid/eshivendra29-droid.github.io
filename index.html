@@ -3,30 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weekly Training Dashboard | Cafe Training</title>
+<title>Weekly Training Dashboard | Third Wave Coffee</title>
 <style>
   :root{
-    --bg:#f5f3ef; --surface:#ffffff; --ink:#29251f; --ink-soft:#6b6459;
-    --muted:#898781; --border:#e4ded4; --accent:#d8a45d; --accent-dark:#29251f;
-    --good:#0ca30c; --warning:#b9790a; --serious:#c1592f; --critical:#c8302f;
-    --good-bg:#e3f6e0; --warning-bg:#fdf0d8; --serious-bg:#fbe4d8; --critical-bg:#fadbdb; --muted-bg:#eee9e0;
-    --am-1:#2a78d6; --am-2:#eb6834; --am-3:#1baf7a; --am-4:#c98500;
-    --am-5:#e87ba4; --am-6:#008300; --am-7:#4a3aa7; --am-8:#e34948;
+    /* TWC-inspired brand chrome (claret + boston blue + warm neutrals) */
+    --bg:#f7f2ee; --surface:#ffffff; --ink:#271217; --ink-soft:#6d5a5c;
+    --muted:#8c7c7a; --border:#e9dfd9; --accent:#c99a3f; --accent-ink:#3a2610;
+    --accent-dark:#7a1f38; --accent-dark-2:#5c1729; --info:#4184c2; --info-bg:#e8f1fa;
+
+    /* Fixed status palette — never themed, consistent everywhere */
+    --good:#0ca30c; --good-bg:#e3f6e0;
+    --warning:#a86a00; --warning-bg:#fdf0d8;
+    --critical:#d03b3b; --critical-bg:#fadbdb;
+    --muted-badge:#736363; --muted-bg:#efe8e5;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
   .container{max-width:1180px;margin:auto;padding:24px;}
-  header{background:var(--accent-dark);color:#fff;padding:44px 24px 30px;}
+
+  header{background:linear-gradient(155deg,var(--accent-dark) 0%,var(--accent-dark-2) 100%);color:#fff;padding:40px 24px 24px;}
   header .container{padding:0 24px;}
-  .tag{display:inline-block;background:var(--accent);color:var(--accent-dark);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.03em;}
-  header h1{font-size:32px;margin:12px 0 6px;}
-  header p{color:#d8d0c4;max-width:640px;margin:4px 0;}
-  .meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:13px;color:#cfc6b6;align-items:center;}
-  #refreshBtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
-  #refreshBtn:hover{background:rgba(255,255,255,.22);}
+  .tag{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.03em;}
+  header h1{font-size:30px;margin:12px 0 6px;}
+  header p{color:#e9d9d3;max-width:640px;margin:4px 0;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:13px;color:#e3cfc8;align-items:center;}
+  #refreshBtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.32);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
+  #refreshBtn:hover{background:rgba(255,255,255,.24);}
   #refreshBtn:disabled{opacity:.6;cursor:default;}
 
-  .filterbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  /* Tabs */
+  .tabbar{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(0,0,0,.02);}
+  .tabbar-inner{max-width:1180px;margin:auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto;}
+  .tabbtn{border:none;background:none;padding:14px 16px;font-size:13.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px;}
+  .tabbtn:hover{color:var(--ink);}
+  .tabbtn.active{color:var(--accent-dark);border-bottom-color:var(--accent-dark);}
+  .tabbtn .count{background:var(--muted-bg);color:var(--ink-soft);border-radius:10px;font-size:11px;padding:1px 7px;font-weight:700;}
+  .tabbtn.active .count{background:var(--accent-dark);color:#fff;}
+
+  .filterbar{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .filterbar label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-right:4px;}
   .filterbar select, .filterbar input[type=search]{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);}
   .filterbar .grp{display:flex;align-items:center;gap:6px;}
@@ -35,36 +49,40 @@
   #clearFilters{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--ink-soft);}
 
   main{padding-top:8px;}
-  h2{margin:0 0 4px;font-size:21px;}
+  h2{margin:0 0 4px;font-size:20px;}
   .section-sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px;}
-  .section{margin-top:26px;background:var(--surface);padding:22px 24px 26px;border-radius:14px;border:1px solid var(--border);}
+  .section{margin-top:22px;background:var(--surface);padding:22px 24px 26px;border-radius:14px;border:1px solid var(--border);}
   .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
-  .note{background:var(--muted-bg);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--ink-soft);margin:10px 0 18px;}
+  .note{background:var(--info-bg);border:1px solid #cfe1f2;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#2c5478;margin:10px 0 18px;}
+
+  .tabpanel{display:none;}
+  .tabpanel.active{display:block;}
 
   .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
   .card{background:var(--bg);padding:16px 16px;border-radius:12px;border:1px solid var(--border);}
   .card h3{font-size:12.5px;color:var(--ink-soft);margin:0;font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
-  .card .number{font-size:27px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums;}
+  .card .number{font-size:26px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums;color:var(--accent-dark);}
   .card .sub{color:var(--muted);font-size:12px;}
 
   table{width:100%;border-collapse:collapse;font-size:13.2px;}
   th{text-align:left;background:var(--bg);color:var(--ink-soft);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;padding:9px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;}
   td{padding:8px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;vertical-align:middle;}
-  tbody tr:hover{background:#faf8f4;}
+  tbody tr:hover{background:#faf5f1;}
   .tablewrap{overflow:auto;max-height:460px;border:1px solid var(--border);border-radius:10px;}
   .tablewrap table{font-size:12.8px;}
   .tablewrap th{top:0;}
 
+  /* Unified status pill system — good / warning / critical / muted, icon + label always */
   .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+  .pill .ic{font-size:10px;line-height:1;}
   .pill.good{background:var(--good-bg);color:var(--good);}
   .pill.warning{background:var(--warning-bg);color:var(--warning);}
-  .pill.serious{background:var(--serious-bg);color:var(--serious);}
   .pill.critical{background:var(--critical-bg);color:var(--critical);}
-  .pill.muted{background:var(--muted-bg);color:var(--ink-soft);}
+  .pill.muted{background:var(--muted-bg);color:var(--muted-badge);}
 
   .barcell{display:flex;align-items:center;gap:8px;min-width:120px;}
   .barcell .track{flex:1;height:7px;background:var(--muted-bg);border-radius:4px;overflow:hidden;}
-  .barcell .fill{height:100%;border-radius:4px;background:var(--am-1);}
+  .barcell .fill{height:100%;border-radius:4px;background:var(--info);}
   .barcell .pct{font-size:12px;font-weight:700;width:38px;text-align:right;}
 
   .stack{display:flex;height:10px;border-radius:5px;overflow:hidden;width:160px;border:1px solid var(--border);}
@@ -82,21 +100,30 @@
   .followlist .who{font-weight:600;}
   .followlist .why{color:var(--ink-soft);font-size:12px;}
 
-  #loadingState{padding:60px 24px;text-align:center;color:var(--ink-soft);}
-  #errorState{display:none;margin:20px 24px;padding:16px 18px;background:var(--critical-bg);color:var(--critical);border-radius:10px;font-size:13.5px;}
+  /* Loading skeleton */
+  #loadingState{padding:24px;}
+  .skel{background:linear-gradient(90deg,#eee3dc 25%,#f5ece6 37%,#eee3dc 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:8px;}
+  @keyframes shimmer{0%{background-position:100% 0;}100%{background-position:0 0;}}
+  .skel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .skel-card{height:78px;border-radius:12px;}
+  .skel-row{height:38px;border-radius:8px;margin-bottom:8px;}
+  .skel-title{height:20px;width:220px;border-radius:6px;margin-bottom:16px;}
+
+  #errorState{display:none;margin:20px 24px;padding:20px 22px;background:var(--critical-bg);border:1px solid #f3c6c6;color:#7a1f1f;border-radius:12px;font-size:13.5px;}
+  #errorState .errhead{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:6px;}
+  #retryBtn{margin-top:10px;background:var(--critical);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12.5px;cursor:pointer;}
   .hidden{display:none !important;}
 
   footer{text-align:center;padding:34px 0 40px;color:var(--muted);font-size:12.5px;}
-  th.sortable{cursor:pointer;user-select:none;}
-  th.sortable:after{content:"↕";opacity:.4;margin-left:4px;font-size:10px;}
 
   @media (max-width:760px){
-    header h1{font-size:26px;}
+    header h1{font-size:25px;}
     .cards{grid-template-columns:repeat(2,1fr);}
-    .filterbar{position:static;}
+    .skel-cards{grid-template-columns:repeat(2,1fr);}
   }
   @media (max-width:440px){
     .cards{grid-template-columns:1fr;}
+    .skel-cards{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -104,7 +131,7 @@
 
 <header>
   <div class="container">
-    <span class="tag">CAFE TRAINING &amp; PERFORMANCE</span>
+    <span class="tag">THIRD WAVE COFFEE &middot; TRAINING &amp; PERFORMANCE</span>
     <h1>Weekly Training Dashboard</h1>
     <p>Live view of station certifications, store training-audit health, and manager SHLP readiness &mdash; pulled straight from the tracking sheet for the weekly review call.</p>
     <div class="meta-row">
@@ -115,10 +142,32 @@
   </div>
 </header>
 
-<div id="loadingState">Loading the latest data from your Google Sheet&hellip;</div>
-<div id="errorState" class="container"></div>
+<div id="loadingState" class="container">
+  <div class="skel skel-title"></div>
+  <div class="skel-cards">
+    <div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div>
+  </div>
+  <div class="skel skel-row"></div>
+  <div class="skel skel-row"></div>
+  <div class="skel skel-row"></div>
+  <div class="skel skel-row"></div>
+  <div class="skel skel-row"></div>
+</div>
+<div id="errorState">
+  <div class="errhead"><span>&#9888;</span> Couldn't load live data</div>
+  <div id="errorMsg"></div>
+  <button id="retryBtn">Retry</button>
+</div>
 
 <div id="app" class="hidden">
+  <div class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tabbtn active" data-tab="followup">Follow-ups <span class="count" id="cnt-followup">0</span></button>
+      <button class="tabbtn" data-tab="cert">Certifications</button>
+      <button class="tabbtn" data-tab="audit">Audit Health</button>
+      <button class="tabbtn" data-tab="shlp">SHLP</button>
+    </div>
+  </div>
   <div class="filterbar">
     <div class="grp">
       <label for="cityFilter">City</label>
@@ -135,47 +184,55 @@
 
   <main class="container">
 
-    <div class="section" id="followupSection">
-      <div class="section-head"><h2>This week&rsquo;s follow-ups</h2></div>
-      <p class="section-sub">Auto-generated from the sheet &mdash; stores and managers that need attention before the next review.</p>
-      <ul class="followlist" id="followList"></ul>
-    </div>
-
-    <div class="section" id="certSection">
-      <div class="section-head"><h2>Station Certifications</h2></div>
-      <p class="section-sub">Food, Beverage &amp; CX station certification across the active team.</p>
-      <div class="cards" id="certCards"></div>
-      <h3 style="margin:18px 0 8px;font-size:15px;">Storewise &mdash; % of team fully certified (all 3 stations)</h3>
-      <div class="tablewrap"><table id="certStoreTable"><thead></thead><tbody></tbody></table></div>
-      <div class="searchWrap">
-        <button class="toggleBtn" id="toggleEmpTable">Show employee-level detail</button>
-      </div>
-      <div id="empDetailWrap" class="hidden">
-        <div class="searchWrap"><input type="search" id="empSearch" placeholder="Search by name, store or employee code&hellip;"></div>
-        <div class="tablewrap"><table id="empTable"><thead></thead><tbody></tbody></table></div>
+    <div class="tabpanel active" id="panel-followup">
+      <div class="section" id="followupSection">
+        <div class="section-head"><h2>This week&rsquo;s follow-ups</h2></div>
+        <p class="section-sub">Auto-generated from the sheet &mdash; stores and managers that need attention before the next review.</p>
+        <ul class="followlist" id="followList"></ul>
       </div>
     </div>
 
-    <div class="section" id="auditSection">
-      <div class="section-head"><h2>Store Training Audit Health</h2></div>
-      <p class="section-sub">Weekly audit score and health category, storewise and by Area Manager.</p>
-      <div id="auditCoverageNote" class="note"></div>
-      <div class="cards" id="auditCards"></div>
-      <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
-      <div class="tablewrap"><table id="auditAmTable"><thead></thead><tbody></tbody></table></div>
-      <h3 style="margin:22px 0 8px;font-size:15px;">Storewise</h3>
-      <div class="tablewrap"><table id="auditStoreTable"><thead></thead><tbody></tbody></table></div>
+    <div class="tabpanel" id="panel-cert">
+      <div class="section" id="certSection">
+        <div class="section-head"><h2>Station Certifications</h2></div>
+        <p class="section-sub">Food, Beverage &amp; CX station certification across the active team.</p>
+        <div class="cards" id="certCards"></div>
+        <h3 style="margin:18px 0 8px;font-size:15px;">Storewise &mdash; % of team fully certified (all 3 stations)</h3>
+        <div class="tablewrap"><table id="certStoreTable"><thead></thead><tbody></tbody></table></div>
+        <div class="searchWrap">
+          <button class="toggleBtn" id="toggleEmpTable">Show employee-level detail</button>
+        </div>
+        <div id="empDetailWrap" class="hidden">
+          <div class="searchWrap"><input type="search" id="empSearch" placeholder="Search by name, store or employee code&hellip;"></div>
+          <div class="tablewrap"><table id="empTable"><thead></thead><tbody></tbody></table></div>
+        </div>
+      </div>
     </div>
 
-    <div class="section" id="shlpSection">
-      <div class="section-head"><h2>SHLP &mdash; Manager Readiness</h2></div>
-      <p class="section-sub">Shift Managers, Assistant Store Managers &amp; Store Managers only.</p>
-      <div class="cards" id="shlpCards"></div>
-      <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
-      <div class="legend" id="shlpLegend"></div>
-      <div class="tablewrap"><table id="shlpAmTable"><thead></thead><tbody></tbody></table></div>
-      <h3 style="margin:22px 0 8px;font-size:15px;">Storewise &mdash; individual managers</h3>
-      <div class="tablewrap"><table id="shlpStoreTable"><thead></thead><tbody></tbody></table></div>
+    <div class="tabpanel" id="panel-audit">
+      <div class="section" id="auditSection">
+        <div class="section-head"><h2>Store Training Audit Health</h2></div>
+        <p class="section-sub">Weekly audit score and health category, storewise and by Area Manager.</p>
+        <div id="auditCoverageNote" class="note"></div>
+        <div class="cards" id="auditCards"></div>
+        <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
+        <div class="tablewrap"><table id="auditAmTable"><thead></thead><tbody></tbody></table></div>
+        <h3 style="margin:22px 0 8px;font-size:15px;">Storewise</h3>
+        <div class="tablewrap"><table id="auditStoreTable"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="panel-shlp">
+      <div class="section" id="shlpSection">
+        <div class="section-head"><h2>SHLP &mdash; Manager Readiness</h2></div>
+        <p class="section-sub">Shift Managers, Assistant Store Managers &amp; Store Managers only.</p>
+        <div class="cards" id="shlpCards"></div>
+        <h3 style="margin:18px 0 8px;font-size:15px;">By Area Manager</h3>
+        <div class="legend" id="shlpLegend"></div>
+        <div class="tablewrap"><table id="shlpAmTable"><thead></thead><tbody></tbody></table></div>
+        <h3 style="margin:22px 0 8px;font-size:15px;">Storewise &mdash; individual managers</h3>
+        <div class="tablewrap"><table id="shlpStoreTable"><thead></thead><tbody></tbody></table></div>
+      </div>
     </div>
 
   </main>
@@ -193,7 +250,6 @@
   const GID_EMP = "486914838";
   const GID_HEALTH = "1403129736";
   const SHLP_DESIGNATIONS = ["Store Manager","Assistant Store Manager","Shift Manager"];
-  const AM_COLORS = ["var(--am-1)","var(--am-2)","var(--am-3)","var(--am-4)","var(--am-5)","var(--am-6)","var(--am-7)","var(--am-8)"];
 
   let state = { employees: [], audit: [], amOrder: [], cityOrder: [], filters: { city: "", am: "" } };
 
@@ -250,26 +306,22 @@
 
   function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
 
-  function pillForShlp(status){
-    if(status === "Pass") return '<span class="pill good">Pass</span>';
-    if(status === "Fail") return '<span class="pill critical">Fail</span>';
-    if(status === "Pending") return '<span class="pill warning">Pending</span>';
-    return '<span class="pill muted">' + (status || "—") + '</span>';
-  }
-  function pillForCert(status){
-    if(status === "Certified") return '<span class="pill good">Certified</span>';
-    if(status === "Pending") return '<span class="pill warning">Pending</span>';
-    return '<span class="pill muted">' + (status || "—") + '</span>';
-  }
-  function pillForHealth(cat){
-    const map = { "Perfect Shot":"good", "Brewing":"warning", "NSO":"serious" };
-    const cls = map[cat] || "muted";
-    return '<span class="pill ' + cls + '">' + (cat || "N/A") + '</span>';
-  }
-  function pillForAction(a){
-    if(a === "Done") return '<span class="pill good">Done</span>';
-    if(a === "Pending") return '<span class="pill critical">Pending</span>';
-    return '<span class="pill muted">' + (a || "—") + '</span>';
+  // ---------- Unified status pill system ----------
+  // Every "state" value across every section maps into exactly one of these four tiers,
+  // so the same word/color/icon always means the same thing everywhere in the dashboard.
+  const STATUS_MAP = {
+    "certified": "good", "pass": "good", "perfect shot": "good", "done": "good", "completed": "good",
+    "pending": "warning", "brewing": "warning",
+    "fail": "critical", "nso": "critical", "not started": "critical", "overdue": "critical",
+    "needs attention (zt)": "critical", "not completed": "critical",
+    "n/a": "muted", "na": "muted"
+  };
+  const TIER_ICON = { good: "✓", warning: "!", critical: "✕", muted: "—" };
+
+  function pill(value){
+    const label = value || "—";
+    const tier = STATUS_MAP[String(label).toLowerCase()] || "muted";
+    return '<span class="pill ' + tier + '"><span class="ic">' + TIER_ICON[tier] + '</span>' + escapeHtml(label) + '</span>';
   }
 
   function pct(n){ return Math.round(n*100) + "%"; }
@@ -327,7 +379,7 @@
       return (e.name||"").toLowerCase().indexOf(q) > -1 || (e.location||"").toLowerCase().indexOf(q) > -1 || (e.code||"").toLowerCase().indexOf(q) > -1;
     }) : emps;
     renderTable("empTable", ["Employee","Code","Store","Designation","Food","Beverage","CX","Orientation"], filtered.slice(0,1000).map(function(e){
-      return [e.name, e.code, e.location, e.designation, pillForCert(e.food), pillForCert(e.beverage), pillForCert(e.cx), e.orientation || "—"];
+      return [e.name, e.code, e.location, e.designation, pill(e.food), pill(e.beverage), pill(e.cx), pill(e.orientation)];
     }));
   }
 
@@ -335,7 +387,6 @@
   function renderAudit(){
     const emps = applyFilters(state.employees);
     const allowedLocations = new Set(emps.map(function(e){return e.location;}));
-    const allowedAMs = new Set(emps.map(function(e){return e.am;}));
     let audit = state.audit.filter(function(a){
       if(state.filters.am && a.am !== state.filters.am) return false;
       if(state.filters.city && !(allowedLocations.has(a.location))) return false;
@@ -358,17 +409,24 @@
       card("Perfect Shot stores", audit.filter(function(a){return a.healthCategory==="Perfect Shot";}).length, "top health tier");
 
     const byAM = groupBy(audit, "am");
+    const catPriority = { "Perfect Shot": 0, "Brewing": 1 };
+    const catOrder = uniqueSorted(audit.map(function(a){ return a.healthCategory; })).sort(function(a,b){
+      const pa = catPriority[a] !== undefined ? catPriority[a] : 2, pb = catPriority[b] !== undefined ? catPriority[b] : 2;
+      return pa - pb || a.localeCompare(b);
+    });
     const amRows = Object.keys(byAM).sort().map(function(am){
       const g = byAM[am];
       const avg = g.reduce(function(s,a){return s+parsePct(a.trainingAuditPct);},0) / g.length;
-      const cats = { "Perfect Shot":0, "Brewing":0, "NSO":0 };
-      g.forEach(function(a){ cats[a.healthCategory] = (cats[a.healthCategory]||0) + 1; });
-      return [am, g.length, barCell(avg), cats["Perfect Shot"]+" / "+cats["Brewing"]+" / "+cats["NSO"]];
+      const breakdown = catOrder.map(function(cat){
+        const n = g.filter(function(a){ return a.healthCategory === cat; }).length;
+        return n ? n + " " + cat : null;
+      }).filter(Boolean).join(" · ") || "—";
+      return [am, g.length, barCell(avg), breakdown];
     });
-    renderTable("auditAmTable", ["Area Manager","Stores","Avg audit score","Perfect Shot / Brewing / NSO"], amRows);
+    renderTable("auditAmTable", ["Area Manager","Stores","Avg audit score","Health category breakdown"], amRows);
 
     const storeRows = audit.slice().sort(function(a,b){ return parsePct(a.trainingAuditPct) - parsePct(b.trainingAuditPct); }).map(function(a){
-      return [a.location, a.am, barCell(parsePct(a.trainingAuditPct)), pillForHealth(a.healthCategory), pillForAction(a.actionPlan), a.orientationLMS || "—"];
+      return [a.location, a.am, barCell(parsePct(a.trainingAuditPct)), pill(a.healthCategory), pill(a.actionPlan), a.orientationLMS || "—"];
     });
     renderTable("auditStoreTable", ["Store","AM","Audit score","Health category","Action plan","Orientation LMS"], storeRows);
   }
@@ -413,7 +471,7 @@
     renderTable("shlpAmTable", ["Area Manager","Managers","Pass / Fail / Pending","Pass rate"], amRows);
 
     const storeRows = emps.slice().sort(function(a,b){ return (a.location||"").localeCompare(b.location||""); }).map(function(e){
-      return [e.location, e.am, e.name, e.designation, pillForShlp(e.shlp), pillForCert(e.fostac)];
+      return [e.location, e.am, e.name, e.designation, pill(e.shlp), pill(e.fostac)];
     });
     renderTable("shlpStoreTable", ["Store","AM","Manager","Designation","SHLP status","FOSTAC"], storeRows);
   }
@@ -444,6 +502,8 @@
     document.getElementById("followList").innerHTML = top.length ? top.map(function(i){
       return '<li><span class="who">'+escapeHtml(i.who)+'</span><span class="why">'+escapeHtml(i.why)+'</span></li>';
     }).join("") : '<li><span class="who">All clear</span><span class="why">No open follow-ups for this filter</span></li>';
+    const badge = document.getElementById("cnt-followup");
+    if(badge){ badge.textContent = String(top.length); badge.style.display = top.length ? "" : "none"; }
   }
 
   function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -467,18 +527,33 @@
     renderShlp();
   }
 
+  // ---------- Tabs ----------
+  function setupTabs(){
+    const btns = document.querySelectorAll(".tabbtn");
+    btns.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        btns.forEach(function(b){ b.classList.remove("active"); });
+        document.querySelectorAll(".tabpanel").forEach(function(p){ p.classList.remove("active"); });
+        btn.classList.add("active");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+  }
+
   function populateFilters(){
     const citySel = document.getElementById("cityFilter");
     const amSel = document.getElementById("amFilter");
+    citySel.innerHTML = '<option value="">All cities</option>';
+    amSel.innerHTML = '<option value="">All AMs</option>';
     state.cityOrder.forEach(function(c){ const o=document.createElement("option"); o.value=c; o.textContent=c; citySel.appendChild(o); });
     state.amOrder.forEach(function(a){ const o=document.createElement("option"); o.value=a; o.textContent=a; amSel.appendChild(o); });
     citySel.value = state.filters.city;
     amSel.value = state.filters.am;
-    citySel.addEventListener("change", function(){ state.filters.city = citySel.value; updateFilterStatus(); renderAll(); });
-    amSel.addEventListener("change", function(){ state.filters.am = amSel.value; updateFilterStatus(); renderAll(); });
-    document.getElementById("clearFilters").addEventListener("click", function(){
+    citySel.onchange = function(){ state.filters.city = citySel.value; updateFilterStatus(); renderAll(); };
+    amSel.onchange = function(){ state.filters.am = amSel.value; updateFilterStatus(); renderAll(); };
+    document.getElementById("clearFilters").onclick = function(){
       state.filters = { city:"", am:"" }; citySel.value=""; amSel.value=""; updateFilterStatus(); renderAll();
-    });
+    };
   }
   function updateFilterStatus(){
     const parts = [];
@@ -503,7 +578,7 @@
       document.getElementById("reviewPeriod").textContent = "Review period: week of " + now.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
       document.getElementById("lastRefreshed").textContent = "Data as of: " + now.toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
 
-      if(document.getElementById("cityFilter").options.length <= 1){ populateFilters(); }
+      populateFilters();
       updateFilterStatus();
       renderAll();
 
@@ -513,13 +588,14 @@
       document.getElementById("loadingState").classList.add("hidden");
       const box = document.getElementById("errorState");
       box.style.display = "block";
-      box.textContent = "Couldn't load live data: " + err.message;
+      document.getElementById("errorMsg").textContent = err.message;
     }finally{
       document.getElementById("refreshBtn").disabled = false;
     }
   }
 
   document.getElementById("refreshBtn").addEventListener("click", loadAll);
+  document.getElementById("retryBtn").addEventListener("click", loadAll);
   document.getElementById("toggleEmpTable").addEventListener("click", function(){
     const wrap = document.getElementById("empDetailWrap");
     const btn = document.getElementById("toggleEmpTable");
@@ -529,6 +605,7 @@
   });
   document.getElementById("empSearch").addEventListener("input", function(){ renderEmpTable(applyFilters(state.employees)); });
 
+  setupTabs();
   loadAll();
 })();
 </script>
