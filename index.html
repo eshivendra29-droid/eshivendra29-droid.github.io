@@ -51,13 +51,29 @@
   .tabbtn .count{background:var(--muted-bg);color:var(--ink-soft);border-radius:10px;font-size:11px;padding:1px 7px;font-weight:700;}
   .tabbtn.active .count{background:var(--accent-dark);color:#fff;}
 
-  .filterbar{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .filterbar{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;}
   .filterbar label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-right:4px;}
-  .filterbar select, .filterbar input[type=search]{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);}
+  .filterbar input[type=search]{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);}
   .filterbar .grp{display:flex;align-items:center;gap:6px;}
   .filterbar .spacer{flex:1;}
-  #filterStatus{font-size:12px;color:var(--muted);}
-  #clearFilters{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--ink-soft);}
+  #filterStatus{font-size:12px;color:var(--muted);padding-top:7px;}
+  #clearFilters{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--ink-soft);height:33px;}
+
+  /* Multi-select filter dropdowns (checkbox list) — touch-friendly, unlike a native <select multiple> */
+  .msWrap{position:relative;}
+  .msBtn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-width:100px;max-width:200px;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .msBtn:after{content:"▾";font-size:9px;color:var(--muted);flex-shrink:0;}
+  .msBtn.hasSelection{border-color:var(--accent-dark);color:var(--accent-dark);font-weight:600;background:#fdf6ee;}
+  .msPanel{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 28px rgba(39,18,23,.16);padding:10px;z-index:50;width:max-content;min-width:200px;max-width:min(300px,86vw);}
+  .msPanel.hidden{display:none;}
+  .msOptions{overflow:auto;max-height:220px;display:flex;flex-direction:column;gap:1px;}
+  .msOption{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer;}
+  .msOption:hover{background:var(--bg);}
+  .msOption input{margin:0;accent-color:var(--accent-dark);}
+  .msEmpty{color:var(--muted);font-size:12.5px;padding:6px 8px;}
+  .msActions{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+  .msActions button{background:none;border:none;color:var(--accent-dark);font-size:12px;font-weight:700;cursor:pointer;padding:4px 6px;}
+  .msActions button:hover{text-decoration:underline;}
 
   main{padding-top:8px;}
   h2{margin:0 0 4px;font-size:20px;}
@@ -182,13 +198,29 @@
     </div>
   </div>
   <div class="filterbar">
-    <div class="grp">
-      <label for="cityFilter">City</label>
-      <select id="cityFilter"><option value="">All cities</option></select>
+    <div class="grp msWrap" id="cityWrap">
+      <label>City</label>
+      <button type="button" class="msBtn" id="cityBtn">All cities</button>
+      <div class="msPanel hidden" id="cityPanel">
+        <div class="msOptions" id="cityOptions"></div>
+        <div class="msActions"><button type="button" data-action="all">Select all</button><button type="button" data-action="none">Clear</button></div>
+      </div>
     </div>
-    <div class="grp">
-      <label for="amFilter">Area Manager</label>
-      <select id="amFilter"><option value="">All AMs</option></select>
+    <div class="grp msWrap" id="amWrap">
+      <label>Area Manager</label>
+      <button type="button" class="msBtn" id="amBtn">All AMs</button>
+      <div class="msPanel hidden" id="amPanel">
+        <div class="msOptions" id="amOptions"></div>
+        <div class="msActions"><button type="button" data-action="all">Select all</button><button type="button" data-action="none">Clear</button></div>
+      </div>
+    </div>
+    <div class="grp msWrap" id="trainerWrap">
+      <label>Trainer</label>
+      <button type="button" class="msBtn" id="trainerBtn">All trainers</button>
+      <div class="msPanel hidden" id="trainerPanel">
+        <div class="msOptions" id="trainerOptions"></div>
+        <div class="msActions"><button type="button" data-action="all">Select all</button><button type="button" data-action="none">Clear</button></div>
+      </div>
     </div>
     <button id="clearFilters">Clear filters</button>
     <div class="spacer"></div>
@@ -265,7 +297,21 @@
   const GID_HEALTH = "1403129736";
   const SHLP_DESIGNATIONS = ["Store Manager","Assistant Store Manager","Shift Manager"];
 
-  let state = { employees: [], audit: [], amOrder: [], cityOrder: [], filters: { city: "", am: "" } };
+  let state = { employees: [], audit: [], amOrder: [], cityOrder: [], trainerOrder: [], filters: { city: [], am: [], trainer: [] } };
+
+  // Filter dimensions shown in the filter bar — all multi-select (checkbox) so
+  // stores can compare several cities/AMs/trainers at once, not just one at a time.
+  const FILTER_DEFS = [
+    { key: "city", allLabel: "All cities" },
+    { key: "am", allLabel: "All AMs" },
+    { key: "trainer", allLabel: "All trainers" }
+  ];
+  function optionsFor(key){
+    if(key === "city") return state.cityOrder;
+    if(key === "am") return state.amOrder;
+    if(key === "trainer") return state.trainerOrder;
+    return [];
+  }
 
   function gvizUrl(gid){
     return "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:json&gid=" + gid;
@@ -291,13 +337,14 @@
     const c = sheet.cols;
     const iCode = idx(c,"Employee_Code"), iName = idx(c,"EmpName"), iStatus = idx(c,"Status"),
           iDesig = idx(c,"Designation"), iLoc = idx(c,"Location"), iCity = idx(c,"City"),
-          iAM = idx(c,"AM"), iFood = idx(c,"Food Station"), iBev = idx(c,"Beverage Station"),
+          iAM = idx(c,"AM"), iTrainer = idx(c,"Trainer"), iFood = idx(c,"Food Station"), iBev = idx(c,"Beverage Station"),
           iCX = idx(c,"CX Station"), iAll3 = idx(c,"All 3 Station Certification Status"),
           iOrient = idx(c,"Orientation"), iShlp = idx(c,"SHLP Status"), iFostac = idx(c,"FOSTAC");
     return sheet.rows.filter(function(r){ return r[iLoc]; }).map(function(r){
       return {
         code: r[iCode], name: r[iName], status: r[iStatus], designation: r[iDesig],
         location: r[iLoc], city: r[iCity], am: r[iAM],
+        trainer: iTrainer > -1 && r[iTrainer] ? String(r[iTrainer]).trim() : "",
         food: r[iFood], beverage: r[iBev], cx: r[iCX],
         all3: r[iAll3] === "All 3 Station Certified",
         orientation: r[iOrient], shlp: r[iShlp], fostac: r[iFostac]
@@ -347,10 +394,19 @@
 
   function applyFilters(list){
     return list.filter(function(x){
-      if(state.filters.city && x.city !== state.filters.city) return false;
-      if(state.filters.am && x.am !== state.filters.am) return false;
+      if(state.filters.city.length && state.filters.city.indexOf(x.city) === -1) return false;
+      if(state.filters.am.length && state.filters.am.indexOf(x.am) === -1) return false;
+      if(state.filters.trainer.length && state.filters.trainer.indexOf(x.trainer) === -1) return false;
       return true;
     });
+  }
+
+  // The Store Health audit sheet has no Trainer (or City) column of its own — only
+  // Location + AM. So whenever City and/or Trainer filters are active, we restrict
+  // audit rows to whichever locations survive those filters on the employee list.
+  // AM is filtered directly against the audit row's own AM field (more precise).
+  function restrictAuditByLocation(){
+    return state.filters.city.length > 0 || state.filters.trainer.length > 0;
   }
 
   function groupBy(arr, key){
@@ -392,8 +448,8 @@
     const filtered = q ? emps.filter(function(e){
       return (e.name||"").toLowerCase().indexOf(q) > -1 || (e.location||"").toLowerCase().indexOf(q) > -1 || (e.code||"").toLowerCase().indexOf(q) > -1;
     }) : emps;
-    renderTable("empTable", ["Employee","Code","Store","Designation","Food","Beverage","CX","Orientation"], filtered.slice(0,1000).map(function(e){
-      return [e.name, e.code, e.location, e.designation, pill(e.food), pill(e.beverage), pill(e.cx), pill(e.orientation)];
+    renderTable("empTable", ["Employee","Code","Store","Designation","Trainer","Food","Beverage","CX","Orientation"], filtered.slice(0,1000).map(function(e){
+      return [e.name, e.code, e.location, e.designation, e.trainer || "—", pill(e.food), pill(e.beverage), pill(e.cx), pill(e.orientation)];
     }));
   }
 
@@ -401,9 +457,10 @@
   function renderAudit(){
     const emps = applyFilters(state.employees);
     const allowedLocations = new Set(emps.map(function(e){return e.location;}));
+    const restrictByLocation = restrictAuditByLocation();
     let audit = state.audit.filter(function(a){
-      if(state.filters.am && a.am !== state.filters.am) return false;
-      if(state.filters.city && !(allowedLocations.has(a.location))) return false;
+      if(state.filters.am.length && state.filters.am.indexOf(a.am) === -1) return false;
+      if(restrictByLocation && !(allowedLocations.has(a.location))) return false;
       return true;
     });
 
@@ -503,8 +560,9 @@
       }
     });
     const allowedLocations = new Set(emps.map(function(e){return e.location;}));
-    state.audit.filter(function(a){ return !state.filters.city || allowedLocations.has(a.location); })
-      .filter(function(a){ return !state.filters.am || a.am === state.filters.am; })
+    const restrictByLocation = restrictAuditByLocation();
+    state.audit.filter(function(a){ return !restrictByLocation || allowedLocations.has(a.location); })
+      .filter(function(a){ return !state.filters.am.length || state.filters.am.indexOf(a.am) > -1; })
       .forEach(function(a){
         if(a.actionPlan === "Pending") items.push({ who: a.location, why: "Audit action plan pending (" + a.healthCategory + ")", weight: 2 });
       });
@@ -533,8 +591,9 @@
   }
   function filterSuffix(){
     const parts = [];
-    if(state.filters.city) parts.push(state.filters.city);
-    if(state.filters.am) parts.push(state.filters.am);
+    if(state.filters.city.length) parts.push(state.filters.city.join("+"));
+    if(state.filters.am.length) parts.push(state.filters.am.join("+"));
+    if(state.filters.trainer.length) parts.push(state.filters.trainer.join("+"));
     return parts.length ? "_" + parts.join("_").replace(/[^a-zA-Z0-9]+/g,"_") : "";
   }
   function exportFilename(tab){
@@ -569,20 +628,21 @@
       return [loc, g[0].city, g[0].am, g.length, c, g.length ? pct(c/g.length) : "—"];
     }).sort(function(a,b){ return String(a[0]).localeCompare(String(b[0])); });
     const empRows = emps.map(function(e){
-      return [e.name, e.code, e.location, e.designation, e.food || "—", e.beverage || "—", e.cx || "—", e.orientation || "—"];
+      return [e.name, e.code, e.location, e.designation, e.trainer || "—", e.food || "—", e.beverage || "—", e.cx || "—", e.orientation || "—"];
     });
     downloadWorkbook([
       { name: "Storewise", headers: ["Store","City","AM","Team size","All-3 certified count","All-3 certified %"], rows: storeRows },
-      { name: "Employee detail", headers: ["Employee","Code","Store","Designation","Food","Beverage","CX","Orientation"], rows: empRows }
+      { name: "Employee detail", headers: ["Employee","Code","Store","Designation","Trainer","Food","Beverage","CX","Orientation"], rows: empRows }
     ], exportFilename("Certifications"));
   }
 
   function exportAudit(){
     const emps = applyFilters(state.employees);
     const allowedLocations = new Set(emps.map(function(e){return e.location;}));
+    const restrictByLocation = restrictAuditByLocation();
     const audit = state.audit.filter(function(a){
-      if(state.filters.am && a.am !== state.filters.am) return false;
-      if(state.filters.city && !(allowedLocations.has(a.location))) return false;
+      if(state.filters.am.length && state.filters.am.indexOf(a.am) === -1) return false;
+      if(restrictByLocation && !(allowedLocations.has(a.location))) return false;
       return true;
     });
     const byAM = groupBy(audit, "am");
@@ -663,25 +723,94 @@
     });
   }
 
+  // ---------- Multi-select filter dropdowns (City / Area Manager / Trainer) ----------
+  function msLabel(def){
+    const sel = state.filters[def.key];
+    if(!sel.length) return def.allLabel;
+    if(sel.length <= 2) return sel.join(", ");
+    return sel.length + " selected";
+  }
+
+  function renderMultiSelect(def){
+    const btn = document.getElementById(def.key + "Btn");
+    const optionsWrap = document.getElementById(def.key + "Options");
+    const opts = optionsFor(def.key);
+    const sel = state.filters[def.key];
+    optionsWrap.innerHTML = opts.length ? opts.map(function(o){
+      const checked = sel.indexOf(o) > -1 ? "checked" : "";
+      const id = "ms_" + def.key + "_" + opts.indexOf(o);
+      return '<label class="msOption" for="'+id+'"><input type="checkbox" id="'+id+'" value="'+escapeHtml(o)+'" '+checked+'>'+escapeHtml(o)+'</label>';
+    }).join("") : '<div class="msEmpty">No options</div>';
+    btn.textContent = msLabel(def);
+    btn.title = sel.length ? sel.join(", ") : def.allLabel;
+    btn.classList.toggle("hasSelection", sel.length > 0);
+  }
+
+  function closeAllMsPanels(){
+    document.querySelectorAll(".msPanel").forEach(function(p){ p.classList.add("hidden"); });
+  }
+
+  function setupMultiSelects(){
+    FILTER_DEFS.forEach(function(def){
+      const btn = document.getElementById(def.key + "Btn");
+      const panel = document.getElementById(def.key + "Panel");
+      const optionsWrap = document.getElementById(def.key + "Options");
+
+      btn.addEventListener("click", function(e){
+        e.stopPropagation();
+        const isHidden = panel.classList.contains("hidden");
+        closeAllMsPanels();
+        if(isHidden) panel.classList.remove("hidden");
+      });
+      panel.addEventListener("click", function(e){ e.stopPropagation(); });
+
+      optionsWrap.addEventListener("change", function(e){
+        if(e.target.tagName !== "INPUT") return;
+        const val = e.target.value;
+        const sel = state.filters[def.key];
+        const i = sel.indexOf(val);
+        if(e.target.checked && i === -1) sel.push(val);
+        if(!e.target.checked && i > -1) sel.splice(i, 1);
+        renderMultiSelect(def);
+        updateFilterStatus();
+        renderAll();
+      });
+
+      panel.querySelector('[data-action="all"]').addEventListener("click", function(){
+        state.filters[def.key] = optionsFor(def.key).slice();
+        renderMultiSelect(def);
+        updateFilterStatus();
+        renderAll();
+      });
+      panel.querySelector('[data-action="none"]').addEventListener("click", function(){
+        state.filters[def.key] = [];
+        renderMultiSelect(def);
+        updateFilterStatus();
+        renderAll();
+      });
+    });
+    document.addEventListener("click", closeAllMsPanels);
+  }
+
   function populateFilters(){
-    const citySel = document.getElementById("cityFilter");
-    const amSel = document.getElementById("amFilter");
-    citySel.innerHTML = '<option value="">All cities</option>';
-    amSel.innerHTML = '<option value="">All AMs</option>';
-    state.cityOrder.forEach(function(c){ const o=document.createElement("option"); o.value=c; o.textContent=c; citySel.appendChild(o); });
-    state.amOrder.forEach(function(a){ const o=document.createElement("option"); o.value=a; o.textContent=a; amSel.appendChild(o); });
-    citySel.value = state.filters.city;
-    amSel.value = state.filters.am;
-    citySel.onchange = function(){ state.filters.city = citySel.value; updateFilterStatus(); renderAll(); };
-    amSel.onchange = function(){ state.filters.am = amSel.value; updateFilterStatus(); renderAll(); };
+    // Drop any previously-selected values that no longer exist after a data refresh.
+    FILTER_DEFS.forEach(function(def){
+      const valid = new Set(optionsFor(def.key));
+      state.filters[def.key] = state.filters[def.key].filter(function(v){ return valid.has(v); });
+    });
+    FILTER_DEFS.forEach(renderMultiSelect);
     document.getElementById("clearFilters").onclick = function(){
-      state.filters = { city:"", am:"" }; citySel.value=""; amSel.value=""; updateFilterStatus(); renderAll();
+      FILTER_DEFS.forEach(function(def){ state.filters[def.key] = []; });
+      FILTER_DEFS.forEach(renderMultiSelect);
+      updateFilterStatus();
+      renderAll();
     };
   }
   function updateFilterStatus(){
     const parts = [];
-    if(state.filters.city) parts.push(state.filters.city);
-    if(state.filters.am) parts.push("AM: " + state.filters.am);
+    if(state.filters.city.length) parts.push(state.filters.city.length === 1 ? state.filters.city[0] : state.filters.city.length + " cities");
+    if(state.filters.am.length) parts.push("AM: " + (state.filters.am.length === 1 ? state.filters.am[0] : state.filters.am.length + " selected"));
+    if(state.filters.trainer.length) parts.push("Trainer: " + (state.filters.trainer.length === 1 ? state.filters.trainer[0] : state.filters.trainer.length + " selected"));
     document.getElementById("filterStatus").textContent = parts.length ? "Filtered: " + parts.join(" · ") : "Showing all stores";
   }
 
@@ -696,6 +825,7 @@
       state.audit = loadAudit(healthSheet);
       state.amOrder = uniqueSorted(state.employees.map(function(e){return e.am;}));
       state.cityOrder = uniqueSorted(state.employees.map(function(e){return e.city;}));
+      state.trainerOrder = uniqueSorted(state.employees.map(function(e){return e.trainer;}));
 
       const now = new Date();
       document.getElementById("reviewPeriod").textContent = "Review period: week of " + now.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
@@ -733,6 +863,7 @@
   document.getElementById("exportShlp").addEventListener("click", exportShlp);
 
   setupTabs();
+  setupMultiSelects();
   loadAll();
 })();
 </script>
