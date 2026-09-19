@@ -3,7 +3,7 @@
 // flaky connection. It deliberately does NOT touch the Google Sheets data
 // fetch — that must always hit the network so the numbers stay live.
 
-const CACHE = "twc-dashboard-shell-v1";
+const CACHE = "twc-dashboard-shell-v2";
 const SHELL_FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", function (event) {

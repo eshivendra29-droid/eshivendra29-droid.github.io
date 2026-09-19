@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TWC Training">
+<meta name="apple-mobile-web-app-title" content="Training Update West">
 
 <style>
   :root{
@@ -464,8 +464,8 @@
       return true;
     });
 
-    const coveredCities = uniqueSorted(state.employees.filter(function(e){ return audit.some(function(a){return a.location===e.location;}); }).map(function(e){return e.city;}));
-    const allCities = uniqueSorted(state.employees.map(function(e){return e.city;}));
+    const coveredCities = uniqueSorted(emps.filter(function(e){ return audit.some(function(a){return a.location===e.location;}); }).map(function(e){return e.city;}));
+    const allCities = uniqueSorted(emps.map(function(e){return e.city;}));
     const missing = allCities.filter(function(c){ return coveredCities.indexOf(c) === -1; });
     document.getElementById("auditCoverageNote").textContent = missing.length
       ? "Audit data currently on file for: " + coveredCities.join(", ") + ". Not yet captured for: " + missing.join(", ") + " — add rows to the Store Health tab in the same format and they'll show up here automatically."

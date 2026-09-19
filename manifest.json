@@ -1,6 +1,6 @@
 {
-  "name": "TWC Weekly Training Dashboard",
-  "short_name": "TWC Training",
+  "name": "Training Update West",
+  "short_name": "Training Update West",
   "description": "Live station certifications, store training-audit health, and manager SHLP readiness for Third Wave Coffee.",
   "start_url": "./index.html",
   "scope": "./",
