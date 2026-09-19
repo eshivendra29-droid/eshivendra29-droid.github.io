@@ -353,14 +353,28 @@
   }
 
   function loadAudit(sheet){
-    // Positional read – header row for this tab is a merged banner, so labels aren't reliable.
-    return sheet.rows.filter(function(r){ return typeof r[0] === "string" && /^\d+$/.test(r[0]) && r[1]; }).map(function(r){
+    // Row 1 of this tab is a merged banner, which corrupts gviz's label for column A
+    // only — every other column keeps its real header text, so we match by label (with
+    // a positional fallback, for safety) instead of hardcoded positions. This also means
+    // a new column — like "City" — is picked up automatically the moment it's added to
+    // the sheet with that header text, wherever it ends up sitting.
+    const c = sheet.cols;
+    function col(label, fallbackPos){ const i = idx(c, label); return i > -1 ? i : fallbackPos; }
+    const iLoc = col("Location", 1), iAM = col("AM", 2), iCity = idx(c, "City"),
+          iTotal = col("Total Employees", 3), iFood = col("Food Station Certified", 4),
+          iBev = col("Beverage Station Certified", 5), iCX = col("CX Station Certified", 6),
+          iAll3 = col("All 3 Stations Certified", 7), iAll3Pct = col("All 3 Station Certified %", 8),
+          iAuditPct = col("Training Audit %", 9), iHealth = col("Health Category", 10),
+          iAction = col("Action Plan", 11), iOrient = col("Orientation On LMS", 12), iDue = col("Due On", 13);
+    return sheet.rows.filter(function(r){ return typeof r[0] === "string" && /^\d+$/.test(r[0]) && r[iLoc]; }).map(function(r){
       return {
-        location: r[1], am: r[2], totalEmployees: Number(r[3]) || 0,
-        foodCert: Number(r[4]) || 0, bevCert: Number(r[5]) || 0, cxCert: Number(r[6]) || 0,
-        all3Count: Number(r[7]) || 0, all3Pct: r[8], trainingAuditPct: r[9],
-        healthCategory: r[10] || "N/A", actionPlan: r[11] || "—",
-        orientationLMS: r[12], dueOn: r[13]
+        location: r[iLoc], am: r[iAM],
+        city: iCity > -1 && r[iCity] ? String(r[iCity]).trim() : "",
+        totalEmployees: Number(r[iTotal]) || 0,
+        foodCert: Number(r[iFood]) || 0, bevCert: Number(r[iBev]) || 0, cxCert: Number(r[iCX]) || 0,
+        all3Count: Number(r[iAll3]) || 0, all3Pct: r[iAll3Pct], trainingAuditPct: r[iAuditPct],
+        healthCategory: r[iHealth] || "N/A", actionPlan: r[iAction] || "—",
+        orientationLMS: r[iOrient], dueOn: r[iDue]
       };
     });
   }
@@ -401,12 +415,35 @@
     });
   }
 
-  // The Store Health audit sheet has no Trainer (or City) column of its own — only
-  // Location + AM. So whenever City and/or Trainer filters are active, we restrict
-  // audit rows to whichever locations survive those filters on the employee list.
-  // AM is filtered directly against the audit row's own AM field (more precise).
+  // Whether the Store Health sheet's own City column exists and has data yet. Once it
+  // does, City filtering (and the coverage note in renderAudit) uses it directly —
+  // exact, and no longer dependent on store names matching between the two sheets.
+  function auditCityDataAvailable(){
+    return state.audit.some(function(a){ return a.city; });
+  }
+
+  // The Store Health audit sheet has no Trainer column of its own — only Location + AM
+  // (and, once the sheet's City column is filled in, City too). Trainer filtering always
+  // restricts audit rows indirectly, via whichever locations survive the Trainer filter
+  // on the employee list; City filtering does the same ONLY until the audit sheet's own
+  // City column has data — after that it filters audit rows directly (see filterAudit).
+  // AM is always filtered directly against the audit row's own AM field (more precise).
   function restrictAuditByLocation(){
-    return state.filters.city.length > 0 || state.filters.trainer.length > 0;
+    return state.filters.trainer.length > 0 || (state.filters.city.length > 0 && !auditCityDataAvailable());
+  }
+
+  // Shared by the Audit Health tab's render, export and follow-up computation so the
+  // three filtering rules can't drift out of sync with each other.
+  function filterAudit(emps){
+    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
+    const restrictByLocation = restrictAuditByLocation();
+    const cityDirect = auditCityDataAvailable();
+    return state.audit.filter(function(a){
+      if(state.filters.am.length && state.filters.am.indexOf(a.am) === -1) return false;
+      if(cityDirect && state.filters.city.length && state.filters.city.indexOf(a.city) === -1) return false;
+      if(restrictByLocation && !allowedLocations.has(a.location)) return false;
+      return true;
+    });
   }
 
   function groupBy(arr, key){
@@ -456,15 +493,12 @@
   // ---------- Render: Audit Health ----------
   function renderAudit(){
     const emps = applyFilters(state.employees);
-    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
-    const restrictByLocation = restrictAuditByLocation();
-    let audit = state.audit.filter(function(a){
-      if(state.filters.am.length && state.filters.am.indexOf(a.am) === -1) return false;
-      if(restrictByLocation && !(allowedLocations.has(a.location))) return false;
-      return true;
-    });
+    const audit = filterAudit(emps);
+    const cityDirect = auditCityDataAvailable();
 
-    const coveredCities = uniqueSorted(emps.filter(function(e){ return audit.some(function(a){return a.location===e.location;}); }).map(function(e){return e.city;}));
+    const coveredCities = cityDirect
+      ? uniqueSorted(audit.map(function(a){ return a.city; }))
+      : uniqueSorted(emps.filter(function(e){ return audit.some(function(a){return a.location===e.location;}); }).map(function(e){return e.city;}));
     const allCities = uniqueSorted(emps.map(function(e){return e.city;}));
     const missing = allCities.filter(function(c){ return coveredCities.indexOf(c) === -1; });
     document.getElementById("auditCoverageNote").textContent = missing.length
@@ -497,9 +531,9 @@
     renderTable("auditAmTable", ["Area Manager","Stores","Avg audit score","Health category breakdown"], amRows);
 
     const storeRows = audit.slice().sort(function(a,b){ return parsePct(a.trainingAuditPct) - parsePct(b.trainingAuditPct); }).map(function(a){
-      return [a.location, a.am, barCell(parsePct(a.trainingAuditPct)), pill(a.healthCategory), pill(a.actionPlan), a.orientationLMS || "—"];
+      return [a.location, a.city || "—", a.am, barCell(parsePct(a.trainingAuditPct)), pill(a.healthCategory), pill(a.actionPlan), a.orientationLMS || "—"];
     });
-    renderTable("auditStoreTable", ["Store","AM","Audit score","Health category","Action plan","Orientation LMS"], storeRows);
+    renderTable("auditStoreTable", ["Store","City","AM","Audit score","Health category","Action plan","Orientation LMS"], storeRows);
   }
   function parsePct(v){
     if(typeof v === "number") return v;
@@ -559,13 +593,9 @@
         items.push({ who: loc, why: (g.length-c) + " team member(s) missing full station certification", weight: g.length-c });
       }
     });
-    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
-    const restrictByLocation = restrictAuditByLocation();
-    state.audit.filter(function(a){ return !restrictByLocation || allowedLocations.has(a.location); })
-      .filter(function(a){ return !state.filters.am.length || state.filters.am.indexOf(a.am) > -1; })
-      .forEach(function(a){
-        if(a.actionPlan === "Pending") items.push({ who: a.location, why: "Audit action plan pending (" + a.healthCategory + ")", weight: 2 });
-      });
+    filterAudit(emps).forEach(function(a){
+      if(a.actionPlan === "Pending") items.push({ who: a.location, why: "Audit action plan pending (" + a.healthCategory + ")", weight: 2 });
+    });
     emps.filter(function(e){ return SHLP_DESIGNATIONS.indexOf(e.designation) > -1 && e.shlp === "Fail"; }).forEach(function(e){
       items.push({ who: e.name + " — " + e.location, why: e.designation + " failed SHLP", weight: 3 });
     });
@@ -638,13 +668,7 @@
 
   function exportAudit(){
     const emps = applyFilters(state.employees);
-    const allowedLocations = new Set(emps.map(function(e){return e.location;}));
-    const restrictByLocation = restrictAuditByLocation();
-    const audit = state.audit.filter(function(a){
-      if(state.filters.am.length && state.filters.am.indexOf(a.am) === -1) return false;
-      if(restrictByLocation && !(allowedLocations.has(a.location))) return false;
-      return true;
-    });
+    const audit = filterAudit(emps);
     const byAM = groupBy(audit, "am");
     const catPriority = { "Perfect Shot": 0, "Brewing": 1 };
     const catOrder = uniqueSorted(audit.map(function(a){ return a.healthCategory; })).sort(function(a,b){
@@ -661,11 +685,11 @@
       return [am, g.length, pct(avg), breakdown];
     });
     const storeRows = audit.slice().sort(function(a,b){ return String(a.location).localeCompare(String(b.location)); }).map(function(a){
-      return [a.location, a.am, pct(parsePct(a.trainingAuditPct)), a.healthCategory || "N/A", a.actionPlan || "—", a.orientationLMS || "—"];
+      return [a.location, a.city || "—", a.am, pct(parsePct(a.trainingAuditPct)), a.healthCategory || "N/A", a.actionPlan || "—", a.orientationLMS || "—"];
     });
     downloadWorkbook([
       { name: "By Area Manager", headers: ["Area Manager","Stores","Avg audit score","Health category breakdown"], rows: amRows },
-      { name: "Storewise", headers: ["Store","AM","Audit score","Health category","Action plan","Orientation LMS"], rows: storeRows }
+      { name: "Storewise", headers: ["Store","City","AM","Audit score","Health category","Action plan","Orientation LMS"], rows: storeRows }
     ], exportFilename("AuditHealth"));
   }
 
