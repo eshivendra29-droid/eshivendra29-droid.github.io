@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weekly Training Dashboard | Third Wave Coffee</title>
+
+<!-- PWA: lets stores add this to their phone home screen as an app -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7a1f38">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TWC Training">
+
 <style>
   :root{
     /* TWC-inspired brand chrome (claret + boston blue + warm neutrals) */
@@ -724,6 +735,15 @@
   setupTabs();
   loadAll();
 })();
+</script>
+
+<script>
+  // Register the service worker so the dashboard is installable as an app.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* offline shell is a nice-to-have, not critical */ });
+    });
+  }
 </script>
 
 </body>

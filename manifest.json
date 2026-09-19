@@ -1,0 +1,16 @@
+{
+  "name": "TWC Weekly Training Dashboard",
+  "short_name": "TWC Training",
+  "description": "Live station certifications, store training-audit health, and manager SHLP readiness for Third Wave Coffee.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f2ee",
+  "theme_color": "#7a1f38",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
